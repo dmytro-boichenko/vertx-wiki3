@@ -2,12 +2,8 @@ package io.vertx.guides.wiki.db;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLConnection;
 import io.vertx.serviceproxy.ServiceBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +12,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class WikiDatabaseVerticle extends AbstractVerticle {
 
@@ -31,7 +25,6 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
     public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseVerticle.class);
-
 
     @Override
     public void start(Promise<Void> promise) throws Exception {
@@ -72,7 +65,9 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
 
         sqlQueries.put(SqlQuery.CREATE_PAGES_TABLE, queriesProps.getProperty("create-pages-table"));
         sqlQueries.put(SqlQuery.ALL_PAGES, queriesProps.getProperty("all-pages"));
+        sqlQueries.put(SqlQuery.ALL_PAGES_DATA, queriesProps.getProperty("all-pages-data"));
         sqlQueries.put(SqlQuery.GET_PAGE, queriesProps.getProperty("get-page"));
+        sqlQueries.put(SqlQuery.GET_PAGE_BY_ID, queriesProps.getProperty("get-page-by-id"));
         sqlQueries.put(SqlQuery.CREATE_PAGE, queriesProps.getProperty("create-page"));
         sqlQueries.put(SqlQuery.SAVE_PAGE, queriesProps.getProperty("save-page"));
         sqlQueries.put(SqlQuery.DELETE_PAGE, queriesProps.getProperty("delete-page"));

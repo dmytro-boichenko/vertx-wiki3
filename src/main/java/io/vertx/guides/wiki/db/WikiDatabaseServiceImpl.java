@@ -11,6 +11,7 @@ import io.vertx.ext.sql.SQLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,19 @@ public class WikiDatabaseServiceImpl implements WikiDatabaseService {
     }
 
     @Override
+    public WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+        dbClient.query(sqlQueries.get(SqlQuery.ALL_PAGES_DATA), queryResult -> {
+            if (queryResult.succeeded()) {
+                resultHandler.handle(Future.succeededFuture(queryResult.result().getRows()));
+            } else {
+                LOGGER.error("Database query error", queryResult.cause());
+                resultHandler.handle(Future.failedFuture(queryResult.cause()));
+            }
+        });
+        return this;
+    }
+
+    @Override
     public WikiDatabaseService fetchPage(String name, Handler<AsyncResult<JsonObject>> resultHandler) {
         JsonArray params = new JsonArray().add(name);
 
@@ -81,6 +95,31 @@ public class WikiDatabaseServiceImpl implements WikiDatabaseService {
                     JsonArray row = resultSet.getResults().get(0);
                     response.put("id", row.getInteger(0));
                     response.put("rawContent", row.getString(1));
+                }
+                resultHandler.handle(Future.succeededFuture(response));
+            } else {
+                LOGGER.error("Database query error", fetch.cause());
+                resultHandler.handle(Future.failedFuture(fetch.cause()));
+            }
+        });
+        return this;
+    }
+
+    @Override
+    public WikiDatabaseService fetchPageById(int id, Handler<AsyncResult<JsonObject>> resultHandler) {
+        JsonArray params = new JsonArray().add(id);
+
+        dbClient.querySingleWithParams(sqlQueries.get(SqlQuery.GET_PAGE_BY_ID), params, fetch -> {
+            if (fetch.succeeded()) {
+                JsonObject response = new JsonObject();
+                JsonArray row = fetch.result();
+                if (row == null) {
+                    response.put("found", false);
+                } else {
+                    response.put("found", true);
+                    response.put("id", id);
+                    response.put("name", row.getString(0));
+                    response.put("content", row.getString(1));
                 }
                 resultHandler.handle(Future.succeededFuture(response));
             } else {

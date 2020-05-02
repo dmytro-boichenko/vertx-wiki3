@@ -42,6 +42,7 @@ import io.vertx.serviceproxy.ServiceExceptionMessageCodec;
 import io.vertx.serviceproxy.HelperUtils;
 
 import io.vertx.core.json.JsonArray;
+import java.util.List;
 import io.vertx.guides.wiki.db.WikiDatabaseService;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
@@ -120,8 +121,17 @@ public class WikiDatabaseServiceVertxProxyHandler extends ProxyHandler {
           service.fetchAllPages(HelperUtils.createHandler(msg));
           break;
         }
+        case "fetchAllPagesData": {
+          service.fetchAllPagesData(HelperUtils.createListHandler(msg));
+          break;
+        }
         case "fetchPage": {
           service.fetchPage((java.lang.String)json.getValue("name"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
+        case "fetchPageById": {
+          service.fetchPageById(json.getValue("id") == null ? null : (json.getLong("id").intValue()),
                         HelperUtils.createHandler(msg));
           break;
         }

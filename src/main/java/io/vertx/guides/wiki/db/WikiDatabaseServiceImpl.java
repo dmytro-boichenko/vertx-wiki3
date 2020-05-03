@@ -95,8 +95,9 @@ public class WikiDatabaseServiceImpl implements WikiDatabaseService {
                 } else {
                     response.put("found", true);
                     response.put("id", id);
-                    response.put("name", row.getString(0));
-                    response.put("content", row.getString(1));
+                    response.put("id", row.getInteger(0));
+                    response.put("name", row.getString(1));
+                    response.put("content", row.getString(2));
                 }
                 return response;
             })

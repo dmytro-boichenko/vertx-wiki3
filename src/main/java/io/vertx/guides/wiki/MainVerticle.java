@@ -1,33 +1,26 @@
 package io.vertx.guides.wiki;
 
-import io.vertx.core.AbstractVerticle;
+import io.reactivex.disposables.Disposable;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.guides.wiki.db.WikiDatabaseVerticle;
 import io.vertx.guides.wiki.http.HttpServerVerticle;
+import io.vertx.reactivex.core.AbstractVerticle;
 
 public class MainVerticle extends AbstractVerticle {
 
+    private Disposable init;
+
     @Override
     public void start(Promise<Void> promise) {
-        Promise<String> dbVerticleDeployment = Promise.promise();
-        vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment);
+        init = vertx
+            .rxDeployVerticle(new WikiDatabaseVerticle())
+            .flatMap(id -> vertx.rxDeployVerticle(new HttpServerVerticle(), new DeploymentOptions().setInstances(2)))
+            .subscribe(id -> promise.complete(), promise::fail);
+    }
 
-        dbVerticleDeployment.future()
-            .compose(id -> {
-                Promise<String> httpVerticleDeployment = Promise.promise();
-                vertx.deployVerticle(HttpServerVerticle.class,
-                    new DeploymentOptions().setInstances(2),
-                    httpVerticleDeployment);
-
-                return httpVerticleDeployment.future();
-            })
-            .setHandler(ar -> {
-                if (ar.succeeded()) {
-                    promise.complete();
-                } else {
-                    promise.fail(ar.cause());
-                }
-            });
+    @Override
+    public void stop(Promise<Void> promise) {
+        init.dispose();
     }
 }

@@ -1,13 +1,16 @@
 package io.vertx.guides.wiki.db;
 
+import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLConnection;
+import io.vertx.reactivex.MaybeHelper;
+import io.vertx.reactivex.SingleHelper;
+import io.vertx.reactivex.ext.jdbc.JDBCClient;
+import io.vertx.reactivex.ext.sql.SQLClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,30 +25,19 @@ public class WikiDatabaseServiceImpl implements WikiDatabaseService {
     private final Map<SqlQuery, String> sqlQueries;
     private final JDBCClient dbClient;
 
-    public WikiDatabaseServiceImpl(JDBCClient dbClient,
+    public WikiDatabaseServiceImpl(io.vertx.ext.jdbc.JDBCClient dbClient,
                                    Map<SqlQuery, String> sqlQueries,
                                    Handler<AsyncResult<WikiDatabaseService>> readyHandler) {
         this.sqlQueries = sqlQueries;
-        this.dbClient = dbClient;
+        this.dbClient = new JDBCClient(dbClient);
 
-        dbClient.getConnection(ar -> {
-            if (ar.failed()) {
-                LOGGER.error("Could not open database connection", ar.cause());
-                readyHandler.handle(Future.failedFuture(ar.cause()));
-            } else {
-                SQLConnection connection = ar.result();
-                connection.execute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE), create -> {
-                    connection.close();
-                    if (create.failed()) {
-                        LOGGER.error("Database preparation error", create.cause());
-                        readyHandler.handle(Future.failedFuture(create.cause()));
-                    } else {
-                        LOGGER.info("Database successfully prepared");
-                        readyHandler.handle(Future.succeededFuture(this));
-                    }
-                });
-            }
-        });
+        SQLClientHelper.usingConnectionSingle(this.dbClient,
+            conn -> conn
+                .rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE))
+                .doOnComplete(() -> LOGGER.info("Database successfully prepared"))
+                .doOnError(e -> LOGGER.error("Database preparation error", e))
+                .andThen(Single.just(this)))
+            .subscribe(SingleHelper.toObserver(readyHandler));
     }
 
     @Override
@@ -69,14 +61,9 @@ public class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
     @Override
     public WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-        dbClient.query(sqlQueries.get(SqlQuery.ALL_PAGES_DATA), queryResult -> {
-            if (queryResult.succeeded()) {
-                resultHandler.handle(Future.succeededFuture(queryResult.result().getRows()));
-            } else {
-                LOGGER.error("Database query error", queryResult.cause());
-                resultHandler.handle(Future.failedFuture(queryResult.cause()));
-            }
-        });
+        dbClient.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES_DATA))
+            .map(ResultSet::getRows)
+            .subscribe(SingleHelper.toObserver(resultHandler));
         return this;
     }
 
@@ -109,10 +96,9 @@ public class WikiDatabaseServiceImpl implements WikiDatabaseService {
     public WikiDatabaseService fetchPageById(int id, Handler<AsyncResult<JsonObject>> resultHandler) {
         JsonArray params = new JsonArray().add(id);
 
-        dbClient.querySingleWithParams(sqlQueries.get(SqlQuery.GET_PAGE_BY_ID), params, fetch -> {
-            if (fetch.succeeded()) {
+        dbClient.rxQuerySingleWithParams(sqlQueries.get(SqlQuery.GET_PAGE_BY_ID), params)
+            .map(row -> {
                 JsonObject response = new JsonObject();
-                JsonArray row = fetch.result();
                 if (row == null) {
                     response.put("found", false);
                 } else {
@@ -121,12 +107,9 @@ public class WikiDatabaseServiceImpl implements WikiDatabaseService {
                     response.put("name", row.getString(0));
                     response.put("content", row.getString(1));
                 }
-                resultHandler.handle(Future.succeededFuture(response));
-            } else {
-                LOGGER.error("Database query error", fetch.cause());
-                resultHandler.handle(Future.failedFuture(fetch.cause()));
-            }
-        });
+                return response;
+            })
+            .subscribe(MaybeHelper.toObserver(resultHandler));
         return this;
     }
 

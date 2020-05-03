@@ -38,8 +38,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
         WikiDatabaseService.create(dbClient, sqlQueries, ready -> {
             if (ready.succeeded()) {
                 ServiceBinder binder = new ServiceBinder(vertx);
-                binder.setAddress(CONFIG_WIKIDB_QUEUE)
-                    .register(WikiDatabaseService.class, ready.result());
+                binder.setAddress(CONFIG_WIKIDB_QUEUE).register(WikiDatabaseService.class, ready.result());
                 promise.complete();
             } else {
                 LOGGER.error("Database init error", ready.cause());

@@ -1,17 +1,17 @@
 package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
-import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
 import io.vertx.guides.wiki.db.WikiDatabaseService;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.http.HttpServer;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     @Override
     public void start(Promise<Void> promise) {
         String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, CONFIG_WIKIDB_QUEUE);
-        dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
+        dbService = WikiDatabaseService.createProxy(vertx.getDelegate(), wikiDbQueue);
 
         HttpServer server = vertx.createHttpServer();
 

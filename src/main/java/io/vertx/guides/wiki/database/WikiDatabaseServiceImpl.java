@@ -1,4 +1,4 @@
-package io.vertx.guides.wiki.db;
+package io.vertx.guides.wiki.database;
 
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;

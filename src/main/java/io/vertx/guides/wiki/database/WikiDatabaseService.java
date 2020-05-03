@@ -1,4 +1,4 @@
-package io.vertx.guides.wiki.db;
+package io.vertx.guides.wiki.database;
 
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;

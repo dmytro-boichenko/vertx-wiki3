@@ -15,7 +15,7 @@ public class MainVerticle extends AbstractVerticle {
     public void start(Promise<Void> promise) {
         init = vertx
             .rxDeployVerticle(new WikiDatabaseVerticle())
-            .flatMap(id -> vertx.rxDeployVerticle(new HttpServerVerticle(), new DeploymentOptions().setInstances(2)))
+            .flatMap(id -> vertx.rxDeployVerticle(HttpServerVerticle.class.getCanonicalName(), new DeploymentOptions().setInstances(2)))
             .subscribe(id -> promise.complete(), promise::fail);
     }
 

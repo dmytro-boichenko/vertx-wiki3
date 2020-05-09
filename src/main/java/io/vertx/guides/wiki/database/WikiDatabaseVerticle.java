@@ -17,10 +17,10 @@ import java.util.Properties;
 
 public class WikiDatabaseVerticle extends AbstractVerticle {
 
-    public static final String CONFIG_WIKIDB_JDBC_URL = "wikidb.jdbc.url";
-    public static final String CONFIG_WIKIDB_JDBC_DRIVER_CLASS = "wikidb.jdbc.driver_class";
-    public static final String CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE = "wikidb.jdbc.max_pool_size";
-    public static final String CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE = "wikidb.sqlqueries.resource.file";
+    public static final String CONFIG_WIKIDB_JDBC_URL = "url";
+    public static final String CONFIG_WIKIDB_JDBC_DRIVER_CLASS = "driver_class";
+    public static final String CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE = "max_pool_size";
+    public static final String CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE = "sqlqueries.resource.file";
 
     public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
@@ -30,10 +30,13 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
     public void start(Promise<Void> promise) throws Exception {
         Map<SqlQuery, String> sqlQueries = loadSqlQueries();
 
-        JDBCClient dbClient = JDBCClient.createShared(vertx, new JsonObject()
-            .put("url", config().getString(CONFIG_WIKIDB_JDBC_URL, "jdbc:hsqldb:file:db/wiki"))
-            .put("driver_class", config().getString(CONFIG_WIKIDB_JDBC_DRIVER_CLASS, "org.hsqldb.jdbcDriver"))
-            .put("max_pool_size", config().getInteger(CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, 30)));
+        JsonObject dbConfig = config().getJsonObject("jdbc", new JsonObject()
+            .put(CONFIG_WIKIDB_JDBC_URL, "jdbc:hsqldb:file:db/wiki")
+            .put(CONFIG_WIKIDB_JDBC_DRIVER_CLASS, "org.hsqldb.jdbcDriver")
+            .put(CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, 30)
+        );
+
+        JDBCClient dbClient = JDBCClient.createShared(vertx, dbConfig);
 
         WikiDatabaseService.create(dbClient, sqlQueries, ready -> {
             if (ready.succeeded()) {

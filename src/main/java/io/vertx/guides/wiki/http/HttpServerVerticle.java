@@ -24,7 +24,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
 
-    public static final String CONFIG_HTTP_SERVER_PORT = "http.server.port";
+    public static final String CONFIG_HTTP_SERVER_PORT = "server.port";
     public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
     private static final String EMPTY_PAGE_MARKDOWN =
